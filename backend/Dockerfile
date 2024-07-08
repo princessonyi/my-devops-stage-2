@@ -30,6 +30,3 @@ EXPOSE 80
 
 # Set the command to run the FastAPI app
 CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
-
-
-

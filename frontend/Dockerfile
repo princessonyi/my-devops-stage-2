@@ -21,4 +21,3 @@ EXPOSE 80
 
 # Command to start the React application
 CMD ["npx", "serve", "-s", "dist", "-l", "80"]
-
