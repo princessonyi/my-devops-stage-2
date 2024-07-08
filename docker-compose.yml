@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.6
+    command:
+      - "--api.insecure=true"  # Enable insecure API for dashboard (for testing purposes)
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  react-frontend:
+    image: react-frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.react-frontend.rule=Host(`frontend.example.com`)"  # Replace with your domain
+      - "traefik.http.services.react-frontend.loadbalancer.server.port=80"
+
+  fastapi-backend:
+    image: fastapi-backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fastapi-backend.rule=Host(`backend.example.com`)"  # Replace with your domain
+      - "traefik.http.services.fastapi-backend.loadbalancer.server.port=80"
