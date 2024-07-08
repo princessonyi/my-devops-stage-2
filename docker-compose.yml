@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: app
       POSTGRES_USER: app
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: =my-password
     ports:
       - "5432:5432"
     volumes:
@@ -17,25 +17,20 @@ services:
     image: adminer:latest
     container_name: adminer
     restart: always
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.adminer.rule=Host(`adminer.genni.mooo.com`)"
-      - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+    ports:
+      - "8080:8080"
     environment:
       ADMINER_DEFAULT_SERVER: postgresdb
       ADMINER_DEFAULT_DRIVER: pgsql
 
   backend:
-    image: backend
     build:
       context: ./backend
       dockerfile: Dockerfile
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`genni.mooo.com`)"
-      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    ports:
+      - "8000:80"  # Changed port mapping to match the backend Dockerfile
     environment:
-      - POSTGRES_SERVER=postgresdb
+      - POSTGRES_SERVER=localhost
       - POSTGRES_PASSWORD=password
     env_file:
       - ./backend/.env
@@ -44,32 +39,26 @@ services:
     restart: always
 
   frontend:
-    image: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`genni.mooo.com`)"
-      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    ports:
+      - "5173:80"  # Changed port mapping to match the frontend Dockerfile
     depends_on:
       - backend
+    environment:
+      - VITE_API_URL=http://backend:80  # Changed to use port 80 of backend service
     restart: always
 
   nginx:
     image: 'jc21/nginx-proxy-manager:latest'
     restart: 'unless-stopped'
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.nginx.rule=Host(`proxy.genni.mooo.com`)"
-      - "traefik.http.services.nginx.loadbalancer.server.port=80"
     ports:
       - '80:80'
       - '443:443'
       - '8090:81'
     environment:
       DB_SQLITE_FILE: "/data/database.sqlite"
-      DEFAULT_HOST: genni.mooo.com
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt
